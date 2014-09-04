@@ -1,6 +1,7 @@
 # include what you want
 
-export PATH=$PATH:$HOME/bin
+# moving this laster, since that's the way I like it
+#export PATH=$PATH:$HOME/bin
 
 # add this to the .bashrc: . $HOME/.bashrc.load
 
@@ -34,6 +35,8 @@ then {
 		export PATH=$PATH:/opt/quest/bin
 	}
 fi
+
+export PATH=$PATH:$HOME/bin
 
 # Fixing history to be useful.  Based on http://blog.sanctum.geek.nz/better-bash-history/
 shopt -s histappend
