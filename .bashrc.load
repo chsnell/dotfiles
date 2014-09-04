@@ -6,3 +6,56 @@ export PATH=$PATH:$HOME/bin
 
 ####
 # put any bash customizations in here
+
+# If on a cisco system
+FQDN=`hostname -f`
+DOMAINNAME=`echo $FQDN | cut -d. -f2,3`
+# Sometimes, DOMAINNAME misbehaves because FQDN doesn't populate right
+if [ ${DOMAINNAME} = "" ]
+then {
+	DOMAINNAME=`domainname`
+}
+fi
+
+if [ ${DOMAINNAME} = "cisco.com" ]
+then {
+	export PATH=$PATH:/ecs/bin:/usr/cisco/bin
+}
+fi
+
+if [ -d /opt/puppet ]
+then {
+		export PATH=$PATH:/opt/puppet/bin
+	}
+fi
+
+if [ -d /opt/quest ]
+then {
+		export PATH=$PATH:/opt/quest/bin
+	}
+fi
+
+# Fixing history to be useful.  Based on http://blog.sanctum.geek.nz/better-bash-history/
+shopt -s histappend
+shopt -s cmdhist
+HISTFILESIZE=1000000
+HISTSIZE=1000000
+HISTCONTROL=ignoreboth
+HISTTIMEFORMAT='%F %T '
+PROMPT_COMMAND='history -a'
+
+
+# Adding some custom aliases
+# because I hate the default ls colors, and I'm too lazy to change it
+unalias ls
+alias lf='ls -F'
+alias pine='pine -d0'
+
+# Putting a couple of options in here for common programs
+GREP_OPTIONS="--color=auto"
+LESS="-X"
+
+# Handy function to create gitignore files from a web api
+function gi() { curl -s http://www.gitignore.io/api/$@ ;}
+
+
