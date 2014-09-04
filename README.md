@@ -2,13 +2,13 @@
 
 ## Overview
 
-This repo is a skeleton/template repo for tracking dotfiles.  It contains
-a utility ([dfm](https://github.com/justone/dfm)) to help with managing and
-updating your dotfiles.
+This repo is my private repo for tracking dotfiles based off the dfm template.
+It contains a utility ([dfm](https://github.com/justone/dfm)) to help with
+managing and updating your dotfiles.
 
 ## Using this repo
 
-First, fork this repo.
+Don't.  This is mine.
 
 Then, add your dotfiles:
 
