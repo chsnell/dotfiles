@@ -1,0 +1,16 @@
+[user]
+	name = chsnell
+	email = chsnell@cisco.com
+[color]
+	status = auto
+	branch = auto
+	interactive = auto
+	diff = auto
+[core]
+	editor = vim
+[merge]
+	tool = vimdiff
+[push]
+	default = matching
+[alias]
+	lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
