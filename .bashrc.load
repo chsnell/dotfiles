@@ -36,7 +36,7 @@ then {
 	}
 fi
 
-export PATH=$PATH:$HOME/bin
+export PATH=$PATH:$HOME/bin:$HOME/.gem/bin
 
 # Fixing history to be useful.  Based on http://blog.sanctum.geek.nz/better-bash-history/
 shopt -s histappend
