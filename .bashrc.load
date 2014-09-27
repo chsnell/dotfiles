@@ -38,6 +38,12 @@ fi
 
 export PATH=$PATH:$HOME/bin
 
+if [ -f ~/.dotfiles/exercism_completion.bash ]
+then {
+  . ~/.dotfiles/exercism_completion.bash
+}
+fi
+
 # Fixing history to be useful.  Based on http://blog.sanctum.geek.nz/better-bash-history/
 shopt -s histappend
 shopt -s cmdhist
