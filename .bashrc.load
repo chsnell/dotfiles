@@ -61,4 +61,5 @@ LESS="-X"
 # Handy function to create gitignore files from a web api
 function gi() { curl -s http://www.gitignore.io/api/$@ ;}
 
-
+# Must...have...local...gem path...
+export GEM_HOME=~/.gem
