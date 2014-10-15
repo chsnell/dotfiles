@@ -20,7 +20,7 @@ Session.vim
 *.pydevproject
 .metadata
 .gradle
-bin/
+#bin/
 tmp/
 *.tmp
 *.bak
