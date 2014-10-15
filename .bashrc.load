@@ -50,9 +50,12 @@ PROMPT_COMMAND='history -a'
 
 # Adding some custom aliases
 # because I hate the default ls colors, and I'm too lazy to change it
-unalias ls
+#unalias ls
 alias lf='ls -F'
 alias pine='pine -d0'
+alias mounthome='sshfs chsnell@rtp-xdm-102.cisco.com:/users/chsnell /sshmounts/home'
+alias mountws='sshfs chsnell@rtp-xdm-102.cisco.com:/ws/chsnell-rtp /sshmounts/ws'
+
 
 # Putting a couple of options in here for common programs
 GREP_OPTIONS="--color=auto"
