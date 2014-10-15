@@ -55,6 +55,8 @@ alias lf='ls -F'
 alias pine='pine -d0'
 alias mounthome='sshfs chsnell@rtp-xdm-102.cisco.com:/users/chsnell /sshmounts/home'
 alias mountws='sshfs chsnell@rtp-xdm-102.cisco.com:/ws/chsnell-rtp /sshmounts/ws'
+alias mounteman='sshfs chsnell@chsnell-lnx.cisco.com:/users/chsnell /sshmounts/emanhome'
+
 
 
 # Putting a couple of options in here for common programs
