@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+################################################################
+#
+# THIS FILE IS TRACKED IN VERSION CONTROL
+#
+# Filename: ??
+#
+# Description: 
+#
+# Usage: ??
+#
+# Author: chsnell
+#
+# Current Maintainer: chsnell
+#
+# Reviewer(s):
+#
+################################################################
+# version: 0.1
+#
+# 2014-10-15 written - chsnell
+
+################
+# MAIN PROGRAM #
+################
+
+while getopts ":gc" OPT
+do {
+  case $OPT in
+    g)
+      REPO='.gitconfig.GITHUB'
+      ;;
+    c)
+      REPO='.gitconfig.CISCO'
+      ;;
+    \?)
+      echo "Invalid option: -${OPTARG}"
+      exit 1
+      ;;
+    *)
+      echo "Wha??"
+      exit 1
+      ;;
+  esac
+} done
+
+if [[ ${REPO} != "" ]] && [[ -L $HOME/.gitconfig ]]
+then {
+  echo "Removing existing .gitconfig symlink..."
+  rm ${HOME}/.gitconfig
+  echo "Linking .gitconfig to ${REPO}..."
+  ln -s ${HOME}/${REPO} ${HOME}/.gitconfig
+  echo "Done."
+}
+fi
+

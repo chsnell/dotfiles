@@ -1,0 +1,22 @@
+#!/bin/ksh 
+# $Header: /ecs/bin/RCS/psg,v 1.1 2012/09/18 22:16:37 lkhilwan Exp $
+# 
+# Display processes which match a given pattern
+#
+if [[ ( $1 != -* && $# -ne 1 ) || ( $1 = -* && $# -ne 2 ) ]]
+then
+        print -u2 "usage: psg [addtl_ps_switches] pattern"
+    print -u2 "where 'addtl_ps_switches' defaults to '-f'"
+        exit 1
+fi
+typeset -R6 OURPID=$$
+if [[ $1 = -* ]]
+then
+        /bin/ps -e $1 |
+                /usr/bin/egrep "UID PID PPID|$2" |
+                egrep -v "........$OURPID|egrep UID PID PPID"
+else
+        /bin/ps -ef |
+                /usr/bin/egrep "UID PID PPID|$1" |
+                egrep -v "........$OURPID|egrep UID PID PPID"
+fi
