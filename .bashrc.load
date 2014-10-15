@@ -8,13 +8,31 @@
 ####
 # put any bash customizations in here
 
+IsEmpty() {
+  if [[ "${1}" = "" ]]
+  then {
+    return 1
+  }
+  else {
+    return 0
+  }
+fi
+}
+
 # If on a cisco system
 FQDN=`hostname -f`
 DOMAINNAME=`echo $FQDN | cut -d. -f2,3`
 # Sometimes, DOMAINNAME misbehaves because FQDN doesn't populate right
-if [ ${DOMAINNAME} = "" ]
+if IsEmpty ${DOMAINAME}
 then {
 	DOMAINNAME=`domainname`
+}
+fi
+
+# Man I hate cisco hosts.  So fucking inconsistent.
+if IsEmpty ${DOMAINNAME}
+then {
+  DOMAINNAME=`hostname | cut -d. -f2,3`
 }
 fi
 
