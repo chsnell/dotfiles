@@ -38,23 +38,26 @@ fi
 
 if [ ${DOMAINNAME} = "cisco.com" ]
 then {
-	export PATH=$PATH:/ecs/bin:/usr/cisco/bin
+	export PATH=$PATH:/ecs/bin:/usr/cisco/bin:/auto/smt/bin:/auto/gtrc/bin
 }
 fi
 
+# If I'm on a system that has puppet on it, make sure it's in my path, because that's how I roll
 if [ -d /opt/puppet ]
 then {
 		export PATH=$PATH:/opt/puppet/bin
 	}
 fi
 
+# Same with Vintela.  Yes, that's what lives in /opt/quest.
 if [ -d /opt/quest ]
 then {
 		export PATH=$PATH:/opt/quest/bin
 	}
 fi
 
-export PATH=$PATH:$HOME/bin:$HOME/.gem/bin
+# Add my bin dir & gemdir to my path & the X11 path
+export PATH=$PATH:/usr/X11R6/bin:$HOME/bin:$HOME/.gem/bin
 
 # Fixing history to be useful.  Based on http://blog.sanctum.geek.nz/better-bash-history/
 shopt -s histappend
