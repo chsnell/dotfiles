@@ -92,3 +92,8 @@ function gi() { curl -s http://www.gitignore.io/api/$@ ;}
 
 # Must...have...local...gem path...
 export GEM_HOME=~/.gem
+
+# Nice to have tab completion for git.  Must remember to pull file from
+# https://github.com/git/git/blob/master/contrib/completion/git-completion.bash
+source ~/.dotfiles/git-completion.bash
+
