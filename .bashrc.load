@@ -39,9 +39,10 @@ fi
 if [ ${DOMAINNAME} = "cisco.com" ]
 then {
 	export PATH=$PATH:/ecs/bin:/usr/cisco/bin:/auto/smt/bin:/auto/gtrc/bin
-  export CVSROOT=eman-repo.cisco.com:/usr/local/cvsroot
-  export CVSUMASK=077
+  export CVSROOT=${LOGNAME}@eman-repo.cisco.com:/usr/local/cvsroot
+  export CVSUMASK=007
   export CVS_RSH=ssh
+  export ORACLE_HOME=/apps/SD/oracle10g
 }
 fi
 
