@@ -36,9 +36,9 @@ then {
 }
 fi
 
-if [ ${DOMAINNAME} = "cisco.com" ]
+if [ ${DOMAINNAME} = "cisco.com" ] || IsEmpty ${DOMAINNAME}
 then {
-	export PATH=$PATH:/ecs/bin:/usr/cisco/bin:/auto/smt/bin:/auto/gtrc/bin
+	export PATH=/usr/cisco/bin:$PATH:/ecs/bin:/auto/smt/bin:/auto/gtrc/bin
   export CVSROOT=${LOGNAME}@eman-repo.cisco.com:/usr/local/cvsroot
   export CVSUMASK=007
   export CVS_RSH=ssh
