@@ -1,0 +1,28 @@
+#!/bin/sh
+
+ulimit -c unlimited
+
+#CRASH="--disable-crash-dialog"
+#MPROC="--disable-factory"
+
+case $1 in 
+   1)
+      gnome-terminal --hide-menubar --tab -e 'ssh clue' --tab -e 'ssh esd-lnx' --tab -e 'ssh esd-config' --tab --geometry 80x29+370+20 $CRASH $MPROC &
+      gnome-terminal --hide-menubar --tab -e 'ssh clue' --tab --tab --geometry 80x29-0+20 $CRASH $MPROC &
+      gnome-terminal --hide-menubar --tab -e 'ssh clue' --tab --tab --geometry 160x21-0-25 $CRASH $MPROC &
+   ;;
+   2)
+      gnome-terminal --hide-menubar --tab -e 'ssh clue' --tab --tab --geometry 100x25-0+20 $CRASH $MPROC &
+      gnome-terminal --hide-menubar --tab --tab --tab --geometry 80x25-0-25 $CRASH $MPROC &
+   ;;
+   #3)
+      #gnome-terminal --hide-menubar --tab --tab -e 'ssh -qx clue' --tab -e 'ssh -qx bgl-nas' --tab -e 'ssh -qx bxb-nas-1' --tab -e 'ssh -qx rtp-nas' --tab --geometry 160x25-0+20 $CRASH &
+      #gnome-terminal --hide-menubar --tab -e 'ssh clue' --tab -e 'ssh clue' --tab -e 'ssh clue' --tab --geometry 80x25-0-25 $CRASH &
+   #;;
+   3)
+      gnome-terminal --hide-menubar --tab -e 'ssh kin@banjo.employees.org' --geometry 90x48-0+20 $CRASH &
+   ;;
+   *)
+      echo "Wha?!?"
+   ;;
+esac

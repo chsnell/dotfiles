@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sshfs chsnell@rtp-xdm-102.cisco.com:/users/chsnell /sshmounts/home
+sshfs chsnelL@rtp-xdm-102.cisco.com:/ws/chsnell-rtp /sshmounts/ws
+sshfs chsnell@chsnell-lnx.cisco.com:/users/chsnell /sshmounts/emanhome

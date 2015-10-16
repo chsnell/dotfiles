@@ -1,0 +1,780 @@
+#!/usr/bin/env perl
+
+#
+# $Id: eman-cli,v 1.44 2013/05/28 06:04:39 mahramas Exp $
+#
+# Eman-cli: A command-line client for EMAN
+# Version 3.007
+# Copyright 2002-3 EMAN
+# E-mail: eman-cli-dev@cisco.com
+# Report bugs: http://eman-cli-bugs.cisco.com
+# 
+
+#
+# HISTORY
+#
+# 3.000 2002/04/18 1st general release of rewritten client
+#
+# 3.001 2002/04/30 * eman-cli-local
+#                  * this history
+#                  * check to ensure $cli_server_name is resolvable
+#                  * error messages when no data returned
+#
+# 3.002 2002/05/08 * backup admin prompts for password (bugfix)
+#
+# 3.003 2002/05/31 * sends (client) hostname as client_host param
+#                  * pointing client at eman-cli.cisco.com (cname)
+#                  * added Host: to request to support virtual server
+#
+# 3.004 2002/09/06 * accept list of parameters in files as f:filename;
+#                    line breaks are converted to commas
+#
+# 3.005 2003/01/09 * run as eman-cli-ng to map eman-cli ng show to
+#                    eman-cli-ng host show (and find)
+#                  * also allow eman-cli-ng-dev, eman-cli-ng-local
+#                    (for testing)
+#                  * pass in basename($0) as executable_name param
+#
+# 3.006 2003/07/08 * put --file after other args (was coming first,
+#                    making command line parsing more difficult)
+#                  * matching on --file=\b wasn't the right thing (bugfix)
+#                  * make hgm batch and apmon batch work
+#                  * improve b0rked webserver messages for eman-cli-local
+#                  * add --auth option to force username/pass request
+#                  * eman-dev got renamed
+#
+# 3.007 2003/07/10 * remove eman-cli-ng -> eman-cli ng mapping code
+#
+# 3.008 2003/..... * .eman_cli_rc
+# 
+# 3.009 2006/07/21 * added --clihost option
+
+use strict;
+
+my $DEBUG;          # turn on for (some) debugging output
+
+#
+# Turn on lexical warnings ... but ... only if version supports it.
+# Thanks to Simon Cozens for this one.  :-)
+#
+BEGIN { require warnings and import warnings if $] >= 5.006 }
+
+#
+# Assorted configuration variables.
+#
+my $default_user = 'eman_cli_readonly';
+
+my $default_password = 'eMaNr0pWd';
+
+#
+# Server now hacked to allow clients calling themselves
+# eman-cli 3.something.  This must be incremented EVERY TIME
+# a new client is released, no matter how insignificant the
+# change.
+#
+my $cli_version = 'eman-cli 3.010';
+
+my $cli_server_name = 'eman-cli.cisco.com';
+
+my $dev_cli_server_name = 'ewc-dev.cisco.com';
+
+my $cli_server_cgi_name = '/eman-cli.pcgi';
+
+my $dev_cli_server_cgi_name = '/CLI/eman-cli.pcgi';
+
+my $stage_cli_server_cgi_name = '/CLI/eman-cli.pcgi';
+
+my $stage_cli_server_name = 'ewc-stage.cisco.com';
+
+
+#
+# Globals
+#
+my $input_filename;
+my $file_guts;
+my $start_time = time;
+
+
+=head1 UTILITY SUBROUTINES
+
+=head2 cli_die
+
+(Internal.) Dies by calling exit(1).  Prints an optional error message
+along the lines of die().  Avoids annoying "BEGIN failed" messages if
+used from within BEGIN {}.
+
+=cut
+
+sub cli_die {
+  my $msg = shift;
+  if (defined($msg)) {
+    if ($msg =~ /\n$/) {
+      print STDERR $msg;
+    } else {
+      my ($package, $filename, $line) = caller;
+      print STDERR "$msg at $filename line $line.\n";
+    }
+  }
+  print STDERR "CLI terminated.\n";
+  exit(1);
+}
+
+
+
+=head2 check_require
+
+(Internal.)  use()-like with friendlier error messages if the require()
+fails.  Usage:
+
+  check_require qw(Socket);
+  check_require qw(Foo $bar $baz);
+
+There's no equivalent to C<use Foo()> (= import nothing).
+(TBD is there a simple way for me to fix that?)
+
+=cut
+
+sub check_require {
+  my $module = shift;
+
+  # 
+  # Make error appear to come from caller, right line #, etc.
+  # Import more or less as requested.
+  #
+  my ($package, $filename, $line) = caller;
+  eval qq{\n#line $line $filename
+    require $module; $module->import(\@_);
+  };
+
+  #
+  # If things didn't work out:
+  #
+  if ($@) {
+    print STDERR "ERROR: Module $module could not be loaded.\n";
+    print STDERR "It is required by this program and must be installed.\n";
+    print STDERR "The following message may explain why the module could not be loaded:\n";
+    print STDERR "--\n";
+    print STDERR $@;
+    print STDERR "--\n";
+    cli_die;
+  }
+}
+
+BEGIN {
+  check_require qw(Socket);
+  check_require qw(MIME::Base64);
+  check_require qw(File::Basename basename);
+  # check_require qw(MIME::Base65);   # If you'd like to see how a failure
+                                      # to require is reported ...
+}
+
+
+
+=head2 read_line_noecho
+
+(Internal.)  Reads a line, no echo.
+
+=cut
+
+sub read_line_noecho {
+  my $line;
+  eval {
+    require Term::ReadKey;
+    Term::ReadKey->import(qw(ReadLine ReadMode));
+  };
+  if ($@) {
+    unless ($@ =~ /\blocate Term\b/) {
+      die $@;
+    }
+
+    if ($^O eq "MSWin32") {
+      #
+      # No Term::ReadKey on Win32?  Following code inspired by
+      # Robbie Allen ... thanks.  :-)
+      #
+      eval q{
+        use Win32::Console;
+        #
+        # The console variable can not go out of scope or it will
+        # mess up the console.
+        #
+        $main::console ||= new Win32::Console(STD_INPUT_HANDLE);
+        my $mode = $main::console->Mode();
+        $main::console->Mode(ENABLE_PROCESSED_INPUT);
+
+        for (;;) {
+           my $char = $main::console->InputChar(1);
+           if ($char eq "\b" and length($line) > 0) { # backspace
+              print "\b \b";
+              chop $line;
+           } elsif ($char eq "\r") { # carriage return
+              last;
+           } elsif ($char ne "\b") {
+              $line .= $char;
+              print "*";
+           }
+        }
+        $main::console->Mode($mode);
+        print "\n";
+      };
+
+      #
+      # No Win32::Console?  Give up.
+      #
+      if ($@) {
+        print STDERR $@;
+        die "ERROR: There was a problem loading Win32::Console.\n";
+      }
+
+    } else {
+      #
+      # Non-Win32 fallback is stty.
+      #
+      local $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/local/bin:$ENV{PATH}";
+      system "stty", "-echo" and die "ERROR: stty failed.\n";
+      $line = <STDIN>;
+      system "stty", "echo" and die "ERROR: stty failed.\n";
+    }
+  } else {
+    ReadMode('noecho');
+    $line = ReadLine(0);
+    ReadMode(0);
+  }
+  print "\n" if -t;
+  return $line;
+}
+
+
+
+=head2 read_file
+
+(Internal.)  Takes a filename as an argument.  Returns a single string 
+containing the contents of the file.
+
+=cut
+
+sub read_file {
+  my $filename = shift;
+
+  #
+  # Slurp in the whole thing.
+  #
+  local $/;
+
+  open F, $filename or cli_die "ERROR: Can't open file '$filename' for reading: $!.\n";
+  my $guts = <F>;
+  close F;
+  return $guts;
+}
+
+
+
+=head2 uri_encode
+
+(Internal.)  Return a URI-encoded copy of the input string.
+
+Although s/.../sprintf.../eg looks inefficient, it benchmarks just
+as fast as s/.../$encoded{$1}/g, so ....
+
+=cut
+
+sub uri_encode {
+    my $str = shift;
+    
+    $str =~ s/([^a-zA-Z0-9_\-.])/sprintf("%%%02x",ord($1))/eg;
+    
+    return $str;
+}
+
+
+
+=head2 read_param_file
+
+(Internal.)  Read the contents of a file with the supplied name.
+Line breaks are replaced with commas.
+
+=cut
+
+sub read_param_file {
+  my $guts = read_file(shift);
+  chomp $guts;
+  $guts =~ s/\s*\n\s*/,/g;
+  return $guts;
+}
+
+
+=head2 process_argv
+
+(Internal.) Take a closer look at the command line args and do
+client-side processing.  For example, read a 'file' argument.
+
+=cut
+
+sub process_argv {
+  #
+  # Require authorization for batch or admin commands, or
+  # when explicitly requested by --auth. If, however, the
+  # username and password are passed as arguements using
+  # --username and --password, the authorization check
+  # is not performed.
+  my $auth;
+  my $username_arg;
+  my $password_arg;
+  if (@ARGV > 1 and $ARGV[1] =~ /^(batch|admin|subscribe|unsubscribe|set|push|unsubscr|clone)$/i) {
+    $auth++;
+  }
+
+  # Added the following code for ESL context. Jira: NW-1805
+  if ($ARGV[0] =~ /^(esl)$/i && $ARGV[1] =~ /^(update)$/i) {
+    $auth++;
+  }
+
+  for (my $i = 0; $i < @ARGV ; $i++) {
+    if ($ARGV[$i] =~ /^--username/i) {
+      $username_arg = $';
+      $username_arg =~ s/=//;
+      cli_die qq (ERROR : Invalid username. Correct usage --username=YOUR_USERNAME \n) if $username_arg=~ /^$/;
+  
+      for (my $j = $i+1; $j < @ARGV; $j++) {
+      	if ($ARGV[$j] =~ /^--password/i) {
+          $password_arg = $';
+	  $password_arg =~ s/=//;
+          cli_die qq (ERROR : Invalid password. Correct usage --password='YOUR_PASSWORD' \nNOTE : Please make sure you enclose your password in single quotes if it contains special characters.\n\tEnclose password in double quotes if it contains a single quote.\n) if $password_arg=~ /^$/;
+	  
+	  $default_user = $username_arg;
+	  $default_password = $password_arg;
+	  
+	  splice @ARGV, $j, 1;
+	  splice @ARGV, $i, 1;
+	  $i = $i-2;
+	  $auth = 0 ;
+	}
+      }
+      
+      cli_die qq (ERROR : Password required with username. Usage : --password='YOUR_PASSWORD' \nNOTE : Please make sure you enclose your password in single quotes if it contains special characters.\n\tEnclose password in double quotes if it contains a single quote.\n) if (!defined($password_arg))
+    }
+    elsif ($ARGV[$i] =~ /^--auth(orize)?$/i) {
+	$auth++ if !defined($auth);
+        splice @ARGV, $i, 1;
+	$i--;
+    }
+  }
+
+  if ($auth) {
+    #
+    # Set up for batch or admin by asking for read-write password.
+    #
+    print "Username: "; 
+    chomp($default_user = <STDIN>);
+    print "Password: ";
+    if (-t) {
+      chomp($default_password = read_line_noecho)
+    } else {
+      chomp($default_password = <STDIN>);
+    }
+  }
+
+  my $check_null_arg=0;
+  for (@ARGV) {
+    # Check if null argument is passed by the user
+     if (($_ =~ /^--null/) || ($_ =~ /^-*help$/)) {
+        $check_null_arg=1;
+     } 
+
+    #
+    # Turn --file into --filename.  <sigh>  Easiest way to fix the
+    # "--filename misspelled as --file" bug, which is prompted by
+    # among other things "--hostname" can be spelled as "--host".
+    #
+    s/^--file=/--filename=/;
+
+    if ($_ =~ /^--filename\b/) {
+
+      #
+      # Handle a --filename= argument.
+      #
+      if ($input_filename) {
+        cli_die "ERROR: Only one --file[name]= is allowed.\n";
+      }
+      ($input_filename) = /--filename=(.+)/ or
+        cli_die "ERROR: Usage is '--file[name]=YOURFILE'.\n";
+
+    }
+
+    #
+    # Turn f:filename into the contents of filename.  Newlines
+    # are replaced with commas.
+    #
+    while (my ($filename) = $_ =~ /\bf:([^,]*)/) {
+      $_ =~ s/\bf:[^,]*/read_param_file $filename/e;
+    }
+  }
+  # insert the null argument as "y" into the argv passed to the eman-cli 
+  # server if it is not provided by user.
+   if (!$check_null_arg) {
+      $ARGV[++$#ARGV] = "--null=y";	
+   } 
+
+  # Process --clihost option
+  my $arg;
+  for $arg (0..$#ARGV) {
+    next if (!$ARGV[$arg]);
+    if ($ARGV[$arg] =~ m/^--clihost/) {
+      $cli_server_name = $ARGV[$arg];
+      $cli_server_name =~ s/--clihost=//;
+      $cli_server_cgi_name = '/CLI/eman-cli.pcgi';
+      if ($cli_server_name) {
+	$cli_server_name .= '.cisco.com' unless $cli_server_name =~ /\.|[%*]$/;
+        splice @ARGV,$arg,1;
+      } else {
+	cli_die "ERROR: Usage is '--clihost=SERVER'.\n";
+      }
+    }
+  }
+
+
+  #
+  # If a filename argument was supplied, read the file.
+  #
+  if ($input_filename) {
+    $file_guts = read_file $input_filename;
+    $file_guts =~ s/\015\012/\n/g;     # translate CRLF -> LF  (DOS)
+    $file_guts =~ tr/\015/\n/;         # translate CR -> LF    (Mac)
+  }
+}
+
+
+
+=head2 process_http_request
+
+(Internal.) Make an HTTP request to the CLI server (which is
+actually a CGI program).
+
+If an authorization failure status is returned, prompt for
+user/password and try again.
+
+Writes the output to STDOUT/STDERR as it is received.
+
+=cut
+
+sub process_http_request {
+  my $content = shift;
+
+  my $timeout = 600;    # In case server goes away, etc.
+                        # Will rely on apache for timeouts in general.
+
+  my $user = $default_user;
+  my $password = $default_password;
+  my $exit_status = 0;
+
+  #
+  # Test to see if alarm() is supported.  I prefer doing this to 
+  # checking the OS name variable.
+  #
+  my $no_alarm = 0;
+  eval { alarm 0 };
+  if ($@) {
+    if ($@ =~ /\bunimplemented\b/i) {
+      $no_alarm = 1;
+    } else {
+      die $@;
+    }
+  }
+
+  #
+  # Naked block allows redo (=retry) on authorization failure (401).
+  #
+  REQUEST: {
+    #
+    # Set up a timeout alarm if alarm is supported.
+    # TBD If alarm isn't supported, perhaps handle timeout another way?
+    #
+    # Note: 
+    #   local $foo = $bar unless $condition
+    # is an odd piece of code.  (If you don't think so, you need to
+    # think about it some more.)
+    # 
+    local $SIG{ALRM} = sub { cli_die "ERROR: CLI timed out after $timeout seconds trying to contact server.\n" } unless $no_alarm;
+
+    # 
+    # Another more conventional way to write the above, although this
+    # code produces a warning under 5.6.1 if $no_alarm is true.
+    #
+    # local $SIG{ALRM} = $no_alarm ? 
+    #   $SIG{ALRM} : 
+    #   sub { cli_die "ERROR: CLI timed out after $timeout seconds trying to contact server.\n" };
+
+    alarm $timeout unless $no_alarm;
+
+    my $proto = getprotobyname('tcp') or die "getprotobyname failed: $!";
+    socket(HTTP, PF_INET, SOCK_STREAM, $proto);
+
+    my $port = 80;
+    print STDERR "Attempting connection to port $port.\n" if $DEBUG;
+
+    my $addr = inet_aton($cli_server_name) or
+      die "Couldn't resolve name '$cli_server_name'";
+    print STDERR "CGI server is $cli_server_name\n" if $DEBUG;
+    my $sin = sockaddr_in($port, $addr) or
+      die "sockaddr_in failed: $!";
+
+    connect(HTTP, $sin) or die "connect failed: $!";
+
+    #
+    # Make sure the socket is unbuffered.
+    #
+    select HTTP; $| = 1; select STDOUT;
+    print STDERR "Connected to port $port.\n" if $DEBUG;
+
+    #
+    # Construct the guts of the Authorization: field.
+    #
+    chomp(my $userpass = encode_base64 "$user:$password");
+
+    #
+    # I really ought to know this but ... \015\012 is I think the
+    # correct value to use ... however, "\n" appears to work fine too.
+    # TBD I should probably check this out more carefully sometime.
+    #
+    # my $crlf = "\n";
+    my $crlf = "\015\012";
+
+    #
+    # Bare-bones HTTP request ... this seems to be all that is
+    # required.
+    #
+    # Added Host: to support virtual hosts.
+    #
+    my $request = 
+      "POST $cli_server_cgi_name HTTP/1.0$crlf" .
+      "Authorization: Basic $userpass$crlf" .
+      "Content-Type: application/x-www-form-urlencoded$crlf" .
+      "Host: $cli_server_name$crlf" .
+      sprintf("Content-Length: %d$crlf", length($content)) .
+      $crlf .
+      $content;
+
+    if ($DEBUG) {
+      print STDERR "Sending request:\n----------\n";
+      print STDERR "$request\n--------\n";
+    }
+    print HTTP $request;
+
+    #
+    # Read the status line.
+    #
+    my $http_status = <HTTP> || "";
+    print STDERR "Status: $http_status" if $DEBUG;
+
+    #
+    # 200 is what we want to see.  401 (Auth failure) we ask for new
+    # credentials and try again.  Anything else, fatal error.
+    #
+    my ($status) = $http_status =~ /\s(\d{3})\D+$/;
+    if (!$status) {
+      cli_die "ERROR: Server returned unrecognizable status (server error?).\n";
+    } elsif ($status == 401) {
+      if (!-t) {
+        cli_die "ERROR: Authentication failed in noninteractive execution -- no retry.\n";
+      }
+      print "** Authentication failure **\nPlease try again\n";
+      print "Username: ";
+      chomp($user = <STDIN>);
+      print "Password: ";
+      chomp($password = read_line_noecho);
+      redo REQUEST;
+    } elsif ($status != 200) {
+      cli_die "ERROR: Server returned unexpected status $status.\n";
+    }
+
+    #
+    # Won't be needing this timer any more.  
+    #
+    alarm 0 unless $no_alarm;
+
+    #
+    # Read in the headers.
+    #
+    my @headers;
+    push @headers, $_ while ($_ = <HTTP>) =~ /\S/;
+
+    #
+    # No output?  At all?
+    #
+    unless (@headers) {
+      if (time - $start_time > 60) {
+        cli_die "ERROR: Server returned no headers or data.  Perhaps it timed out.
+If doing a batch, you may need to batch fewer hosts at a time.\n";
+      } else {
+        cli_die "ERROR: Server returned no headers or data.  
+For help please open a case using http://srm.cisco.com/ and search for ‘eman-cli’";
+      }
+    }
+ 
+    if ($DEBUG) {
+      print STDERR "Response received--here are the headers:\n----------\n";
+      print STDERR @headers;
+      print STDERR "----------\n";
+    }
+
+    #
+    # Print the rest to STDOUT/STDERR as appropriate.
+    #
+    my $output = 0;
+    while (<HTTP>) {
+      $output++;
+      if (/^_EMAN_CLI_OOB\|stderr\|(.*)/s) {
+        print STDERR $1;
+      } elsif (/^_EMAN_CLI_OOB\|exitval\|(.*)/) {
+        $exit_status = $1;
+      } else {
+        print;
+      }
+    }
+    close HTTP;
+
+    #
+    # No output?
+    #
+    unless ($output) {
+      if (time - $start_time > 60) {
+        cli_die "ERROR: Server returned no data.  Perhaps it timed out.
+If doing a batch, you may need to batch fewer hosts at a time.\n";
+      } else {
+        cli_die "ERROR: Server returned no data.  
+Please report this to eman-cli-dev\@cisco.com.\n";
+      }
+    }
+
+  }
+
+  return $exit_status;
+}
+
+
+
+# -----------------------------------------------------------------------
+#
+# Main program starts here
+#
+# -----------------------------------------------------------------------
+
+# 
+# Unbuffer STDOUT.
+#
+$| = 1;
+
+#
+# Turn on client debugging output.
+#
+if (@ARGV and $ARGV[0] eq '-d') {
+  $DEBUG = 1;
+  shift;
+}
+
+
+#
+# This has been rearranged to allow eman-cli-ng, eman-cli-ng-dev,
+# eman-cli-ng-local, and so on.  Oh well.  Should be reduced in
+# thoroughness later.
+#
+if (basename($0) =~ /^eman-cli-ng\b/) {
+  #
+  # eman_cli_ng is now the default (and only) mode of operation, so
+  # do nothing here
+  #
+}
+if (basename($0) =~ /-dev$/) {
+  #
+  # Use dev server if being run as 'eman-cli-dev'.
+  #
+  print STDERR "Note: Running against DEVELOPMENT host $dev_cli_server_name.\n";
+  $cli_server_name = $dev_cli_server_name;
+  $cli_server_cgi_name = $dev_cli_server_cgi_name;
+} elsif (basename($0) =~ /-stage$/) {
+  #
+  # Use stage server if being run as 'eman-cli-stage'.
+  #
+  print STDERR "Note: Running against STAGING host $stage_cli_server_name.\n";
+  $cli_server_name = $stage_cli_server_name;
+  $cli_server_cgi_name = $stage_cli_server_cgi_name;
+} elsif (basename($0) =~ /-local$/) {
+  #
+  # If run as eman-cli-local, use local httpd.  Go to a little trouble
+  # to see if it's up and running.
+  #
+  chomp(my $localhost = `hostname`);
+  unless ($localhost) {
+    die "ERROR: eman-cli-local can't get local hostname.\n";
+  }
+  chomp(my $pid_file = `grep PidFile /usr/SD/apache/conf/httpd.conf`);
+  $pid_file =~ s/^PidFile\s+//;
+  unless (-e $pid_file) {
+    die "ERROR: eman-cli-local can't find apache pid file -- web server not running?.\n";
+  }
+  chomp(my $pid = `cat $pid_file`);
+
+  #
+  # Bit of cleverness here ... $! contains 'not owner' if trying kill 0
+  # on a process (e.g. httpd) not owned by this user.  At least on
+  # Solaris it does, which is all I care about.
+  #
+  unless (kill(0, $pid) or $! !~ /\bnot owner\b/) {
+    die "ERROR: Can't contact httpd at process id $pid: $!.\n";
+  }
+  print STDERR "Note: Running against LOCALHOST $localhost.\n";
+  $cli_server_name = $localhost;
+  $cli_server_cgi_name = $dev_cli_server_cgi_name;
+}
+
+#
+# Include a client hostname in the params if practical, to be
+# logged by the server.
+#
+my $client_host = '';
+eval {
+  require Sys::Hostname;
+  $client_host = Sys::Hostname::hostname();
+};
+# ignore errors
+
+eval {
+
+  process_argv();
+
+  my $client_user = $ENV{REMOTE_USER} || $ENV{USER} || $ENV{USERNAME};
+
+  my $command_content = join('&', 
+        "version=" . uri_encode($cli_version),
+        "executable_basename=" . uri_encode(basename($0)),
+        ($client_host
+          ? "client_host=" . uri_encode($client_host)
+          : ()
+        ),
+        ($client_user
+          ? "client_user=" . uri_encode($client_user)
+          : ()
+        ),
+        (map { "Args=" . uri_encode($_) } @ARGV),
+        ($file_guts 
+          ? "Args=" . uri_encode("--file=$file_guts")
+          : ()
+        )
+      );
+
+  my $exit_status = process_http_request($command_content);
+
+  printf STDERR "Server returned exit status '%s'\n", defined($exit_status) ?
+    $exit_status : 'undef' 
+    if $DEBUG;
+
+  exit($exit_status || 0);
+
+};
+
+if ($@) {
+  cli_die qq(There was an unexpected error while processing your request:
+--
+$@--\n)
+}
+
