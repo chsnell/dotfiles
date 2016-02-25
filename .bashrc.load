@@ -19,44 +19,10 @@ IsEmpty() {
 fi
 }
 
-# If on a cisco system
-FQDN=`hostname -f`
-DOMAINNAME=`echo $FQDN | cut -d. -f2,3`
-# Sometimes, DOMAINNAME misbehaves because FQDN doesn't populate right
-if IsEmpty ${DOMAINAME}
-then {
-	DOMAINNAME=`domainname`
-}
-fi
-
-# Man I hate cisco hosts.  So fucking inconsistent.
-if IsEmpty ${DOMAINNAME}
-then {
-  DOMAINNAME=`hostname | cut -d. -f2,3`
-}
-fi
-
-if [ ${DOMAINNAME} = "cisco.com" ] || IsEmpty ${DOMAINNAME}
-then {
-	export PATH=/usr/cisco/bin:$PATH:/ecs/bin:/auto/smt/bin:/auto/gtrc/bin
-  export CVSROOT=${LOGNAME}@eman-repo.cisco.com:/usr/local/cvsroot
-  export CVSUMASK=007
-  export CVS_RSH=ssh
-  export ORACLE_HOME=/apps/SD/oracle10g
-}
-fi
-
 # If I'm on a system that has puppet on it, make sure it's in my path, because that's how I roll
 if [ -d /opt/puppet ]
 then {
 		export PATH=$PATH:/opt/puppet/bin
-	}
-fi
-
-# Same with Vintela.  Yes, that's what lives in /opt/quest.
-if [ -d /opt/quest ]
-then {
-		export PATH=$PATH:/opt/quest/bin
 	}
 fi
 
