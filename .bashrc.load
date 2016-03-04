@@ -29,6 +29,12 @@ fi
 # Add my bin dir & gemdir to my path & the X11 path
 export PATH=$PATH:/usr/X11R6/bin:$HOME/bin:$HOME/.gem/bin
 
+if [ -f /usr/local/etc/bash_completion ]
+then {
+  . /usr/local/etc/bash_completion
+}
+fi
+
 if [ -f ~/.dotfiles/exercism_completion.bash ]
 then {
   . ~/.dotfiles/exercism_completion.bash
