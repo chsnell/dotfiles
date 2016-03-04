@@ -17,8 +17,6 @@
 # Reviewer(s):
 #
 ################################################################
-# version: 0.1
-#
 # 2014-10-15 written - chsnell
 
 ################
@@ -30,6 +28,9 @@ do {
   case $OPT in
     g)
       REPO='.gitconfig.GITHUB'
+      ;;
+    r)
+      REPO='.gitconfig.REDHAT'
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
