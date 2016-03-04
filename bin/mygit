@@ -23,7 +23,7 @@
 # MAIN PROGRAM #
 ################
 
-while getopts ":gc" OPT
+while getopts ":gr" OPT
 do {
   case $OPT in
     g)
