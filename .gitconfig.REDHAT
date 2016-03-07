@@ -1,20 +1,22 @@
 [filter "lfs"]
-	clean = git-lfs clean %f
-	smudge = git-lfs smudge %f
-	required = true
+  clean = git-lfs clean %f
+  smudge = git-lfs smudge %f
+  required = true
 [user]
-	name = Chris Snell
+  name = Chris Snell
   email = csnell@redhat.com
 [color]
         status = auto
         branch = auto
         interactive = auto
         diff = auto
+        ui = auto
 [core]
         editor = vim
 [merge]
         tool = vimdiff
 [push]
-        default = matching
+#        default = matching
+        default = tracking
 [alias]
         lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
