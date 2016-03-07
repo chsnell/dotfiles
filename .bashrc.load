@@ -56,9 +56,10 @@ PROMPT_COMMAND='history -a'
 #unalias ls
 alias lf='ls -F'
 alias pine='pine -d0'
-alias mounthome='sshfs chsnell@rtp-xdm-102.cisco.com:/users/chsnell /sshmounts/home'
-alias mountws='sshfs chsnell@rtp-xdm-102.cisco.com:/ws/chsnell-rtp /sshmounts/ws'
-alias mounteman='sshfs chsnell@chsnell-lnx.cisco.com:/users/chsnell /sshmounts/emanhome'
+#alias mounthome='sshfs chsnell@rtp-xdm-102.cisco.com:/users/chsnell /sshmounts/home'
+#alias mountws='sshfs chsnell@rtp-xdm-102.cisco.com:/ws/chsnell-rtp /sshmounts/ws'
+#alias mounteman='sshfs chsnell@chsnell-lnx.cisco.com:/users/chsnell /sshmounts/emanhome'
+alias filer='sshfs csnell@file.rdu.redhat.com:/home/rdu/csnell ~/filer'
 alias teamtime='zdump EST5EDT UTC PST8PDT Asia/Kolkata'
 
 # Alias to work around MacOSX's default git being old and a security risk
@@ -136,3 +137,9 @@ set_prompt() {
 }
   
 PROMPT_COMMAND='set_prompt'
+
+# Handy function for deleting a line by line number from a file (useful for cleaning
+# up old keys in known_hosts)
+function delline () {
+  sed -i "${1}d" ~/.ssh/known_hosts.redhat
+}
