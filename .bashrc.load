@@ -5,6 +5,14 @@
 
 # add this to the .bashrc: . $HOME/.bashrc.load
 
+# because ssh keys save lives :)
+if [ -f /usr/local/bin/keychain ]
+then {
+  /usr/local/bin/keychain $HOME/.ssh/id_rsa
+  source $HOME/.keychain/`uname -f`-sh
+}
+fi
+
 ####
 # put any bash customizations in here
 
