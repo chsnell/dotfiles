@@ -48,3 +48,12 @@ local.properties
 # TeXlipse plugin
 .texlipse
 
+# Red Hat specifics
+*validate*
+*-fix
+ddns-update.sh
+pastebin
+wless
+sync-puppet*
+.sync-puppet.cfg
+
