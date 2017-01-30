@@ -52,8 +52,10 @@ local.properties
 *validate*
 *-fix
 ddns-update.sh
-pastebin
+pastebin*
 wless
 sync-puppet*
 .sync-puppet.cfg
+bin/oc
+bin/git-update-heads
 

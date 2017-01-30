@@ -9,7 +9,7 @@
 if [ -f /usr/local/bin/keychain ]
 then {
   /usr/local/bin/keychain $HOME/.ssh/id_rsa
-  source $HOME/.keychain/`uname -f`-sh
+  source $HOME/.keychain/`hostname -f`-sh
 }
 fi
 
@@ -151,3 +151,20 @@ PROMPT_COMMAND='set_prompt'
 function delline () {
   sed -i "${1}d" ~/.ssh/known_hosts.redhat
 }
+
+function gi() { curl -L -s https://www.gitignore.io/api/\$@ ;}
+
+alias makebotocore='I="core"; rm -rf ~/.boto; ln -s ~/.boto$I ~/.boto; IFS=$'\n'; for i in `cat ~/.boto | grep AWS | sed s/" "//g`; do export $(echo $i); done; IFS=$" "; unset $I'
+
+alias makebotodev='I="dev"; rm -rf ~/.boto; ln -s ~/.boto$I ~/.boto; IFS=$'\n'; for i in `cat ~/.boto | grep AWS | sed s/" "//g`; do export $(echo $i); done; IFS=$" "; unset $I'
+
+# Because GPG is becoming more prevalent in my life :(
+export GPG_TTY=`tty`
+#/usr/local/bin/gpg-agent --daemon --enable-ssh-support --write-env-file ~/.gpg-agent-info
+#source ~/.gpg-agent-info
+
+export JAVA_HOME=`/usr/libexec/java_home -v 1.8.0_102`
+
+# Adding some gcal foo
+alias gchome='gcalcli --configFolder ~/.gcalclihome'
+alias gcwork='gcalcli --configFolder ~/.gcalcliwork'
