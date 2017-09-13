@@ -29,9 +29,6 @@ do {
     g)
       REPO='.gitconfig.GITHUB'
       ;;
-    r)
-      REPO='.gitconfig.REDHAT'
-      ;;
     \?)
       echo "Invalid option: -${OPTARG}"
       exit 1
