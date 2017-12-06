@@ -30,7 +30,7 @@ fi
 # If I'm on a system that has puppet on it, make sure it's in my path, because that's how I roll
 if [ -d /opt/puppet ]
 then {
-		export PATH=$PATH:/opt/puppet/bin
+		export PATH=$PATH:/opt/puppet/bin:/opt/puppetlabs/pdk/bin
 	}
 fi
 
@@ -164,7 +164,7 @@ export GPG_TTY=`tty`
 #/usr/local/bin/gpg-agent --daemon --enable-ssh-support --write-env-file ~/.gpg-agent-info
 #source ~/.gpg-agent-info
 
-export JAVA_HOME=`/usr/libexec/java_home -v 1.8.0_102`
+#export JAVA_HOME=`/usr/libexec/java_home -v 1.8.0_102`
 
 # Adding some gcal foo
 alias gchome='gcalcli --configFolder ~/.gcalclihome'
