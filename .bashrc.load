@@ -30,12 +30,12 @@ fi
 # If I'm on a system that has puppet on it, make sure it's in my path, because that's how I roll
 if [ -d /opt/puppet ]
 then {
-		export PATH=$PATH:/opt/puppet/bin:/opt/puppetlabs/pdk/bin
+		export PATH=$PATH:/opt/puppet/bin
 	}
 fi
 
 # Add my bin dir & gemdir to my path & the X11 path
-export PATH=$PATH:/usr/X11R6/bin:$HOME/bin:$HOME/.gem/bin
+export PATH=$PATH:/opt/puppetlabs/pdk/bin:/usr/X11R6/bin:$HOME/bin:$HOME/.gem/bin
 
 if [ -f /usr/local/etc/bash_completion ]
 then {
