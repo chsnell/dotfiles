@@ -6,16 +6,16 @@
 # add this to the .bashrc: . $HOME/.bashrc.load
 
 # because ssh keys save lives :)
-if [ -f /usr/local/bin/keychain ]
+# for reference, cygwin's current keychain (2.7.1) sucks
+KEYCHAINLOC=/usr/bin/keychain
+if [ -f $KEYCHAINLOC ]
 then {
-  /usr/local/bin/keychain $HOME/.ssh/id_rsa
-  source $HOME/.keychain/`hostname -f`-sh
+  $KEYCHAINLOC --agents ssh $HOME/.ssh/id_rsa
+  source $HOME/.keychain/`hostname -s`-sh
 }
 fi
 
-####
-# put any bash customizations in here
-
+# Handy function
 IsEmpty() {
   if [[ "${1}" = "" ]]
   then {
@@ -27,16 +27,28 @@ IsEmpty() {
 fi
 }
 
+### PATH CHANGES ###
+
 # If I'm on a system that has puppet on it, make sure it's in my path, because that's how I roll
 if [ -d /opt/puppet ]
 then {
-		export PATH=$PATH:/opt/puppet/bin
-	}
+  export PATH=$PATH:/opt/puppet/bin
+}
+fi
+
+if [ -d /opt/puppetlabs/pdk ]
+then {
+  export PATH=$PATH:/opt/puppetlabs/pdk/bin
+}
 fi
 
 # Add my bin dir & gemdir to my path & the X11 path
-export PATH=$PATH:/opt/puppetlabs/pdk/bin:/usr/X11R6/bin:$HOME/bin:$HOME/.gem/bin
+export PATH=$PATH:/usr/X11R6/bin:$HOME/bin:$HOME/.gem/bin:$HOME/mybin
 
+### END PATH CHANGES ###
+
+
+# Add in some extra bash completion help
 if [ -f /usr/local/etc/bash_completion ]
 then {
   . /usr/local/etc/bash_completion
@@ -61,13 +73,17 @@ PROMPT_COMMAND='history -a'
 
 # Adding some custom aliases
 # because I hate the default ls colors, and I'm too lazy to change it
-#unalias ls
+if [ `type -t ls` == "alias" ]
+then {
+    unalias ls
+}
+fi
 alias lf='ls -F'
 alias pine='pine -d0'
 #alias mounthome='sshfs chsnell@rtp-xdm-102.cisco.com:/users/chsnell /sshmounts/home'
 #alias mountws='sshfs chsnell@rtp-xdm-102.cisco.com:/ws/chsnell-rtp /sshmounts/ws'
 #alias mounteman='sshfs chsnell@chsnell-lnx.cisco.com:/users/chsnell /sshmounts/emanhome'
-alias filer='sshfs csnell@file.rdu.redhat.com:/home/rdu/csnell ~/filer'
+#alias filer='sshfs csnell@file.rdu.redhat.com:/home/rdu/csnell ~/filer'
 alias teamtime='zdump EST5EDT UTC PST8PDT Asia/Kolkata'
 
 # Alias to work around MacOSX's default git being old and a security risk
@@ -77,13 +93,14 @@ then {
 }
 fi
 
-
 # Putting a couple of options in here for common programs
 GREP_OPTIONS="--color=auto"
 LESS="-X"
 
 # Handy function to create gitignore files from a web api
-function gi() { curl -s http://www.gitignore.io/api/$@ ;}
+#function gi() { curl -s http://www.gitignore.io/api/$@ ;}
+function gi() { curl -L -s https://www.gitignore.io/api/\$@ ;}
+
 
 # Must...have...local...gem path...
 export GEM_HOME=~/.gem
@@ -146,18 +163,16 @@ set_prompt() {
   
 PROMPT_COMMAND='set_prompt'
 
+### END PROMPT ###
+
 # Handy function for deleting a line by line number from a file (useful for cleaning
 # up old keys in known_hosts)
 function delline () {
-  sed -i "${1}d" ~/.ssh/known_hosts.redhat
+  sed -i "${1}d" ~/.ssh/known_hosts
 }
 
-eval "$(rbenv init -)"
-function gi() { curl -L -s https://www.gitignore.io/api/\$@ ;}
-
-alias makebotocore='I="core"; rm -rf ~/.boto; ln -s ~/.boto$I ~/.boto; IFS=$'\n'; for i in `cat ~/.boto | grep AWS | sed s/" "//g`; do export $(echo $i); done; IFS=$" "; unset $I'
-
-alias makebotodev='I="dev"; rm -rf ~/.boto; ln -s ~/.boto$I ~/.boto; IFS=$'\n'; for i in `cat ~/.boto | grep AWS | sed s/" "//g`; do export $(echo $i); done; IFS=$" "; unset $I'
+# If doing ruby/puppet development, this is handy
+#eval "$(rbenv init -)"
 
 # Because GPG is becoming more prevalent in my life :(
 export GPG_TTY=`tty`
@@ -167,5 +182,12 @@ export GPG_TTY=`tty`
 #export JAVA_HOME=`/usr/libexec/java_home -v 1.8.0_102`
 
 # Adding some gcal foo
-alias gchome='gcalcli --configFolder ~/.gcalclihome'
-alias gcwork='gcalcli --configFolder ~/.gcalcliwork'
+if [ -d /usr/local/bin/gcalcli ]
+then {
+  alias gchome='gcalcli --configFolder ~/.gcalclihome'
+  alias gcwork='gcalcli --configFolder ~/.gcalcliwork'
+}
+fi
+
+# (hopefully) Fixing terminal titles
+echo -ne "\033]0;${USER}@${HOSTNAME}\007"
