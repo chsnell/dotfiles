@@ -22,6 +22,10 @@ case $1 in
    3)
       gnome-terminal --hide-menubar --tab -e 'ssh kin@employees.org' --geometry 90x48-0+20 $CRASH &
    ;;
+   4)
+      gnome-terminal --hide-menubar --tab --tab -e 'ssh -qx root@vsxldapisw1' --tab -e 'ssh xdl380bkp02 --tab -e vrh7dnschqp01 --geometry 100x54-2100+0 $CRASH $MPROC &
+      gnome-terminal --hide-menubar --tab --tab --tab --geometry 80x29-2835-75 $CRASH $MPROC &
+   ;;
    *)
       echo "Wha?!?"
    ;;
