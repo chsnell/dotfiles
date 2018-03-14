@@ -25,9 +25,13 @@
 
 while getopts ":gr" OPT
 do {
+  echo "here"
   case $OPT in
     g)
       REPO='.gitconfig.GITHUB'
+      ;;
+    r)
+      REPO='.gitconfig.RAILINC'
       ;;
     \?)
       echo "Invalid option: -${OPTARG}"
@@ -47,6 +51,9 @@ then {
   echo "Linking .gitconfig to ${REPO}..."
   ln -s ${HOME}/${REPO} ${HOME}/.gitconfig
   echo "Done."
+}
+else {
+  echo "Wha?!?"
 }
 fi
 
