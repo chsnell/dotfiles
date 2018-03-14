@@ -168,7 +168,7 @@ sub run_dfm {
     else {
         $repo_dir = $realbin;
         $repo_dir =~ s/$home\///;
-        $repo_dir =~ s/\/bin//;
+        $repo_dir =~ s/\/mybin//;
     }
 
     DEBUG("Repo dir: $repo_dir");
