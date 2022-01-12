@@ -29,6 +29,12 @@ Plugin 'gnupg'
 " https://github.com/pearofducks/ansible-vim
 Plugin 'pearofducks/ansible-vim'
 
+" https://vimawesome.com/plugin/python-syntax-please-everybody
+Plugin 'vim-python/python-syntax'
+
+" https://github.com/ConradIrwin/vim-bracketed-paste
+Plugin 'ConradIrwin/vim-bracketed-paste'
+
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
 
@@ -42,7 +48,6 @@ call vundle#end()            " required
 " Put your non-Plugin stuff after this line
 
 syntax on
-colors torte
 ab teh the
 filetype plugin indent on
 set tabstop=2

@@ -42,6 +42,18 @@ then {
 }
 fi
 
+if [ -d /usr/local/cloud/bin ]
+then {
+  export PATH=$PATH:/usr/local/cloud/bin
+}
+fi
+
+if [ -d /usr/local/scripts ]
+then {
+  export PATH=$PATH:/usr/local/scripts
+}
+fi
+
 # Add my bin dir & gemdir to my path & the X11 path
 export PATH=$PATH:/usr/X11R6/bin:$HOME/bin:$HOME/.gem/bin:$HOME/mybin
 
@@ -55,9 +67,21 @@ then {
 }
 fi
 
+if [ -d /etc/bash_completion.d ]
+then {
+  . /etc/bash_completion.d/*
+}
+fi
+
 if [ -f ~/.dotfiles/exercism_completion.bash ]
 then {
   . ~/.dotfiles/exercism_completion.bash
+}
+fi
+
+if [ -f ~/.dotfiles/ansible-completion.bash ]
+then {
+  . ~/.dotfiles/ansible-completion.bash ]
 }
 fi
 
