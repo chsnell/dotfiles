@@ -11,7 +11,7 @@ use File::Spec;
 use File::Copy;
 use Pod::Usage;
 
-our $VERSION = '0.7';
+our $VERSION = '0.7-custom';
 
 my %opts;
 my $profile_filename;
@@ -177,6 +177,10 @@ sub run_dfm {
 
     if ( lc($OSNAME) eq 'darwin' ) {
         $profile_filename = '.profile';
+    }
+
+    if ( lc($OSNAME) eq 'linux' ) {
+        $profile_filename = '.bash_profile';
     }
 
     if ( exists $commands->{$command} ) {
