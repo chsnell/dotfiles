@@ -10,8 +10,12 @@
 KEYCHAINLOC=/usr/bin/keychain
 if [ -f $KEYCHAINLOC ]
 then {
-  $KEYCHAINLOC --agents ssh $HOME/.ssh/id_rsa
-  source $HOME/.keychain/`hostname -s`-sh
+  if tty -s
+  then {
+    $KEYCHAINLOC --agents ssh $HOME/.ssh/id_rsa
+    source $HOME/.keychain/`hostname -s`-sh
+  }
+  fi
 }
 fi
 
