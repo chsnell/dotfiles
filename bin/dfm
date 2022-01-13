@@ -179,10 +179,6 @@ sub run_dfm {
         $profile_filename = '.profile';
     }
 
-    if ( lc($OSNAME) eq 'linux' ) {
-        $profile_filename = '.bash_profile';
-    }
-
     if ( exists $commands->{$command} ) {
         if ( $opts{'help'} ) {
             $commands->{'help'}->( [$command] );
