@@ -89,6 +89,12 @@ then {
 }
 fi
 
+if [ -f /usr/bin/kubectl ]
+then {
+  source <(kubectl completion bash)
+}
+fi
+
 # Fixing history to be useful.  Based on http://blog.sanctum.geek.nz/better-bash-history/
 shopt -s histappend
 shopt -s cmdhist
